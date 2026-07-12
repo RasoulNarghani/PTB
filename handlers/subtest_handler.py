@@ -131,8 +131,8 @@ async def check_expired_subtests(context: ContextTypes.DEFAULT_TYPE):
         # علامت‌گذاری به عنوان منقضی
         db.mark_subtest_expired(user_id)
 
-        # حذف اشتراک تست از نمایش
-        db.update_subscription_status(test["subtest_username"], "expired")
+        # حذف کامل اشتراک تست از نمایش (هم پروفایل، هم اشتراک‌های من)
+        db.soft_delete_subscription(test["subtest_username"], user_id)
 
         # اطلاع رسانی به کاربر
         try:
