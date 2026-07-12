@@ -14,6 +14,7 @@ from telegram.ext import (
     filters,
     ContextTypes
 )
+database import DB_PATH
 
 from config import BOT_TOKEN, ADMIN_ID
 from database import init_db
@@ -82,6 +83,18 @@ logger = logging.getLogger(__name__)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("telegram").setLevel(logging.WARNING)
 
+async def send_db_backup(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != ADMIN_ID:
+        return  # فقط ادمین اجازه داره
+    try:
+        with open(DB_PATH, "rb") as f:
+            await context.bot.send_document(
+                chat_id=update.effective_chat.id,
+                document=f,
+                filename="persian_tunnel.db"
+            )
+    except Exception as e:
+        await update.message.reply_text(f"خطا در ارسال فایل: {e}")
 
 
 async def universal_message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -190,6 +203,7 @@ def main():
     application.add_handler(CommandHandler("user", user_command))
     application.add_handler(CommandHandler("message", message_command))
     application.add_handler(CommandHandler("channel", channel_command))
+application.add_handler(CommandHandler("getdb", send_db_backup))
 
     # ==========================================
     # Callback Query Handlers
