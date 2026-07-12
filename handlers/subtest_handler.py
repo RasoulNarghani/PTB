@@ -45,6 +45,9 @@ async def receive_subtest_callback(update: Update, context: ContextTypes.DEFAULT
     await query.answer()
     user = update.effective_user
 
+    if not db.is_subtest_allowed(user.id):
+        await query.message.edit_text("❌ شما مجاز به دریافت اشتراک تست نیستید.", reply_markup=go_back_keyboard())
+        return
     # بررسی آیا قبلاً اشتراک تست گرفته
     existing_test = db.get_user_subtest(user.id)
     if existing_test:
