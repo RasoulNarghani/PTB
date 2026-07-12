@@ -3,7 +3,14 @@
 # bot.py - فایل اصلی ربات Persian Tunnel
 # =============================================
 
-from handlers.admin import admin_panel_callback, handle_admin_panel_rep
+from handlers.admin import (
+    admin_panel_callback,
+    handle_admin_panel_rep,
+    restoredb_command,
+    handle_restoredb_upload,
+    admindb_confirm_restore_callback,
+    admindb_cancel_restore_callback,
+)
 import logging
 import asyncio
 from telegram import Update
@@ -16,6 +23,7 @@ from telegram.ext import (
     ContextTypes
 )
 from database import DB_PATH
+from datetime import datetime
 
 from config import BOT_TOKEN, ADMIN_ID
 from database import init_db
@@ -140,6 +148,10 @@ async def universal_message_handler(update: Update, context: ContextTypes.DEFAUL
 
     # ادمین: پاسخ به کاربران
     if user.id == ADMIN_ID:
+        if await handle_restoredb_upload(update, context):
+            return
+        if await handle_admin_panel_reply(update, context):
+            return
         if await handle_admin_panel_reply(update, context):
             return
         if await handle_admin_reply(update, context):
@@ -171,6 +183,20 @@ async def universal_message_handler(update: Update, context: ContextTypes.DEFAUL
     if await handle_support_message(update, context):
         return
 
+# بک آپ خودکار و دوره ای
+async def auto_backup_job(context: ContextTypes.DEFAULT_TYPE):
+    from database import DB_PATH
+    try:
+        with open(DB_PATH, "rb") as f:
+            await context.bot.send_document(
+                chat_id=ADMIN_ID,
+                document=f,
+                filename=f"backup_{datetime.now().strftime('%Y%m%d_%H%M')}.db",
+                caption="🔄 بکاپ خودکار روزانه"
+            )
+    except Exception as e:
+        logger.error(f"Auto backup failed: {e}")
+
 
 async def post_init(application: Application):
     """اجرا شده بعد از راه‌اندازی"""
@@ -201,7 +227,11 @@ def main():
     # ==========================================
     # Command Handlers
     # ==========================================
-    application.add_handler(CallbackQueryHandler(admin_panel_callback, pattern=r"^adminp_.+$"))
+    application.add_handler(CommandHandler("restoredb", restoredb_command))
+    application.add_handler(CallbackQueryHandler(admindb_confirm_restore_callback, pattern="^admindb_confirm_restore$"))
+    application.add_handler(CallbackQueryHandler(admindb_cancel_restore_callback, pattern="^admindb_cancel_restore$"))
+    application.add_handler
+        (CallbackQueryHandler(admin_panel_callback, pattern=r"^adminp_.+$"))
     application.add_handler(CommandHandler("start", start_handler))
     application.add_handler(CommandHandler("price", price_command))
     application.add_handler(CommandHandler("user", user_command))
@@ -304,6 +334,11 @@ def main():
         check_expired_subtests,
         interval=1800,  # هر 30 دقیقه
         first=60        # اولین اجرا 60 ثانیه بعد از شروع
+    )
+    job_queue.run_repeating(
+        auto_backup_job,
+        interval=86400,   # هر ۲۴ ساعت
+        first=300          # ۵ دقیقه بعد از استارت
     )
 
     # ==========================================
