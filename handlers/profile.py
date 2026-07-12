@@ -71,7 +71,7 @@ async def show_profile(query_or_update, context: ContextTypes.DEFAULT_TYPE, edit
             )
 
     # دریافت اطلاعات بروز شده
-    subscriptions = db.get_user_subscriptions(user.id)
+    subscriptions = db.get_user_subscriptions(user.id, include_test=False)
     points_data = db.get_points(user.id) or {}
     invited_users = db.get_invited_users(user.id)
 
@@ -100,13 +100,9 @@ async def profile_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await show_profile(update, context)
 
 
-async def show_my_accounts(query, context: ContextTypes.DEFAULT_TYPE):
-    """نمایش لیست اشتراک‌ها"""
-    user = query.from_user
-
-    # بروزرسانی اشتراک‌ها
+# بروزرسانی اشتراک‌ها (اشتراک تست هیچ‌وقت توی این لیست نشون داده نمی‌شه)
     subscriptions = db.get_user_subscriptions(user.id)
-    active_subs = [s for s in subscriptions if s["sub_type"] != "test"]
+    final_subs = [s for s in subscriptions if s["sub_type"] != "test"]
 
     # فیلتر اشتراک تست منقضی شده
     final_subs = []
