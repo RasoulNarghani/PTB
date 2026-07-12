@@ -74,7 +74,7 @@ from handlers.admin import (
     handle_channel_message,
 
     admin_panel_callback,
-    handle_admin_panel_rep,
+    handle_admin_panel_reply,
     restoredb_command,
     handle_restoredb_upload,
     admindb_confirm_restore_callback,
