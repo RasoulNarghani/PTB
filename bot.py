@@ -156,8 +156,6 @@ async def universal_message_handler(update: Update, context: ContextTypes.DEFAUL
             return
         if await handle_admin_panel_reply(update, context):
             return
-        if await handle_admin_panel_reply(update, context):
-            return
         if await handle_admin_reply(update, context):
             return
         if await handle_admin_support_reply(update, context):
