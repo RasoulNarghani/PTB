@@ -35,7 +35,7 @@ def init_db():
     """ایجاد جداول دیتابیس"""
     with get_db() as conn:
         cursor = conn.cursor()
-    ensure_subtest_allowed_column()
+
         # جدول کاربران
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS users (
@@ -160,6 +160,8 @@ def init_db():
                 updated_at TEXT DEFAULT (datetime('now'))
             )
         """)
+
+        ensure_subtest_allowed_column()
 
         logger.info("Database initialized successfully.")
 
