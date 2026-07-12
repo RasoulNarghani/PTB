@@ -110,10 +110,7 @@ async def user_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # ارسال پیام‌های تقسیم شده (Telegram limit: 4096 chars)
         chunks = [text[i:i+4000] for i in range(0, len(text), 4000)]
         for chunk in chunks:
-            await update.message.reply_text(
-        text, parse_mode="HTML",
-        reply_markup=admin_user_panel_keyboard(user_id)
-    )
+            await update.message.reply_text(chunk, parse_mode="HTML")
         return
 
     try:
@@ -132,7 +129,10 @@ async def user_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     inviter = db.get_inviter(user_id)
 
     text = admin_user_detail_text(user_data, subscriptions, invites, inviter)
-    await update.message.reply_text(text, parse_mode="HTML")
+    await update.message.reply_text(
+        text, parse_mode="HTML",
+        reply_markup=admin_user_panel_keyboard(user_id)
+    )
 
 
 # ==========================================
