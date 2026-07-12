@@ -3,14 +3,6 @@
 # bot.py - فایل اصلی ربات Persian Tunnel
 # =============================================
 
-from handlers.admin import (
-    admin_panel_callback,
-    handle_admin_panel_rep,
-    restoredb_command,
-    handle_restoredb_upload,
-    admindb_confirm_restore_callback,
-    admindb_cancel_restore_callback,
-)
 import logging
 import asyncio
 from telegram import Update
@@ -71,10 +63,22 @@ from handlers.subtest_handler import (
     check_expired_subtests, handle_admin_subtest_reset
 )
 from handlers.admin import (
-    price_command, user_command, message_command,
+    price_command,
+    user_command,
+    message_command,
     channel_command,
-    admin_send_now_callback, admin_cancel_callback, admin_add_buttons_callback,
-    handle_admin_broadcast, handle_channel_message
+    admin_send_now_callback,
+    admin_cancel_callback,
+    admin_add_buttons_callback,
+    handle_admin_broadcast,
+    handle_channel_message,
+
+    admin_panel_callback,
+    handle_admin_panel_rep,
+    restoredb_command,
+    handle_restoredb_upload,
+    admindb_confirm_restore_callback,
+    admindb_cancel_restore_callback
 )
 
 # تنظیمات لاگ
