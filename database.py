@@ -587,3 +587,62 @@ def get_state(user_id: int) -> Optional[Dict]:
 def clear_state(user_id: int):
     with get_db() as conn:
         conn.execute("DELETE FROM bot_states WHERE user_id=?", (user_id,))
+
+
+
+# ==========================================
+# توابع پنل مدیریت کاربر (ادمین)
+# ==========================================
+
+def ensure_subtest_allowed_column():
+    """اضافه کردن ستون subtest_allowed در صورت نبود (یکبار در init_db صدا زده میشه)"""
+    with get_db() as conn:
+        cols = [r["name"] for r in conn.execute("PRAGMA table_info(users)").fetchall()]
+        if "subtest_allowed" not in cols:
+            conn.execute("ALTER TABLE users ADD COLUMN subtest_allowed INTEGER DEFAULT 1")
+
+def is_subtest_allowed(user_id: int) -> bool:
+    with get_db() as conn:
+        row = conn.execute("SELECT subtest_allowed FROM users WHERE user_id=?", (user_id,)).fetchone()
+        return row["subtest_allowed"] != 0 if row else True
+
+def set_subtest_allowed(user_id: int, allowed: bool):
+    with get_db() as conn:
+        conn.execute("UPDATE users SET subtest_allowed=? WHERE user_id=?", (1 if allowed else 0, user_id))
+
+def force_mark_subtest_used(user_id: int):
+    """ثبت دستی اینکه کاربر قبلا اشتراک تست گرفته (بدون تخصیص واقعی)"""
+    import datetime
+    with get_db() as conn:
+        existing = conn.execute("SELECT id FROM subtest_assignments WHERE user_id=?", (user_id,)).fetchone()
+        if existing:
+            return
+        past = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        conn.execute("""
+            INSERT INTO subtest_assignments
+            (user_id, subtest_username, subtest_link, subtest_number, expires_at, is_expired)
+            VALUES (?, 'manual', 'manual', 0, ?, 1)
+        """, (user_id, past))
+
+def clear_subtest_usage(user_id: int):
+    """آزاد کردن دوباره‌ی امکان دریافت اشتراک تست"""
+    with get_db() as conn:
+        conn.execute("DELETE FROM subtest_assignments WHERE user_id=?", (user_id,))
+
+def set_points_field(user_id: int, field: str, value):
+    """ویرایش یکی از فیلدهای جدول points"""
+    allowed_fields = {"total_points", "unused_points", "invite_points", "buy_points"}
+    if field not in allowed_fields:
+        raise ValueError("فیلد نامعتبر")
+    with get_db() as conn:
+        conn.execute(f"UPDATE points SET {field}=? WHERE user_id=?", (value, user_id))
+
+def set_inviter(user_id: int, inviter_id: int):
+    with get_db() as conn:
+        conn.execute("UPDATE users SET invited_by=? WHERE user_id=?", (inviter_id, user_id))
+
+def set_invited_by_bulk(inviter_id: int, invited_ids: list):
+    """چند کاربر رو بصورت یکجا 'دعوت‌شده توسط' این کاربر ثبت می‌کنه"""
+    with get_db() as conn:
+        for uid in invited_ids:
+            conn.execute("UPDATE users SET invited_by=? WHERE user_id=?", (inviter_id, uid))
