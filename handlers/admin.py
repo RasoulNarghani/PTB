@@ -8,7 +8,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
 from config import ADMIN_ID, CHANNEL_ID
-from keyboards import admin_message_channel_keyboard
+from keyboards import admin_message_channel_keyboard, admin_user_panel_keyboard
 from texts import (
     ADMIN_MESSAGE_CHANNEL, ADMIN_URL_BUTTON,
     admin_price_text, admin_user_list_text, admin_user_detail_text,
@@ -103,7 +103,10 @@ async def user_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # ارسال پیام‌های تقسیم شده (Telegram limit: 4096 chars)
         chunks = [text[i:i+4000] for i in range(0, len(text), 4000)]
         for chunk in chunks:
-            await update.message.reply_text(chunk, parse_mode="HTML")
+            await update.message.reply_text(
+        text, parse_mode="HTML",
+        reply_markup=admin_user_panel_keyboard(user_id)
+    )
         return
 
     try:
@@ -487,3 +490,102 @@ def parse_url_buttons(text: str) -> list:
             rows.append(row)
 
     return rows
+
+
+
+import json as _json
+
+ADMINP_PROMPTS = {
+    "msg": "✉️ متن پیامی که می‌خوای برای این کاربر ارسال بشه رو بفرست:",
+    "points": "🏆 به این فرمت ریپلای کن:\nfield مقدار\nمثال: unused_points 500\n(فیلدها: total_points, unused_points, invite_points, buy_points)",
+    "setinviter": "👤 آیدی عددی کسی که این کاربر توسط اون دعوت شده رو بفرست:",
+    "setinvited": "👥 یک یا چند آیدی عددی (با فاصله) از کسانی که این کاربر دعوتشون کرده رو بفرست:",
+    "subs": "📦 یکی از این حالت‌ها رو بفرست:\nadd USERNAME LINK\nedit USERNAME NEW_LINK\ndelete USERNAME",
+    "subtest": "⏱ یکی از این‌ها رو بفرست:\nallow - مجاز به دریافت اشتراک تست\nblock - غیرمجاز کردن\nusedmark - ثبت دستی اینکه قبلا گرفته\nreset - آزاد کردن دوباره امکان دریافت",
+}
+
+async def admin_panel_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    if query.from_user.id != ADMIN_ID:
+        return
+
+    _, action, target_id = query.data.split("_", 2)
+    target_id = int(target_id)
+
+    sent = await query.message.reply_text(ADMINP_PROMPTS[action])
+    db.set_state(ADMIN_ID, f"adminp_{action}", _json.dumps({"target": target_id}))
+    context.bot_data[f"adminp_wait_{sent.message_id}"] = True
+
+
+async def handle_admin_panel_reply(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
+    user = update.effective_user
+    message = update.effective_message
+    if user.id != ADMIN_ID or not message.reply_to_message:
+        return False
+
+    replied_id = message.reply_to_message.message_id
+    if f"adminp_wait_{replied_id}" not in context.bot_data:
+        return False
+
+    state_data = db.get_state(ADMIN_ID) or {}
+    state = state_data.get("state", "")
+    if not state.startswith("adminp_"):
+        return False
+
+    action = state.replace("adminp_", "")
+    payload = _json.loads(state_data.get("data") or "{}")
+    target_id = payload.get("target")
+    text = (message.text or "").strip()
+
+    try:
+        if action == "msg":
+            await context.bot.send_message(chat_id=target_id, text=text, parse_mode="HTML")
+            await message.reply_text("✅ پیام ارسال شد.")
+
+        elif action == "points":
+            field, value = text.split()
+            db.set_points_field(target_id, field, int(value))
+            await message.reply_text("✅ امتیاز بروزرسانی شد.")
+
+        elif action == "setinviter":
+            db.set_inviter(target_id, int(text))
+            await message.reply_text("✅ دعوت‌کننده ثبت شد.")
+
+        elif action == "setinvited":
+            ids = [int(x) for x in text.split()]
+            db.set_invited_by_bulk(target_id, ids)
+            await message.reply_text(f"✅ {len(ids)} کاربر به عنوان دعوت‌شده ثبت شدند.")
+
+        elif action == "subs":
+            parts = text.split()
+            cmd = parts[0].lower()
+            if cmd == "add":
+                _, username, link = parts
+                db.add_subscription(target_id, username, link, sub_type="gift")
+            elif cmd == "edit":
+                _, username, link = parts
+                db.update_subscription_link(username, link)
+            elif cmd == "delete":
+                _, username = parts
+                db.soft_delete_subscription(username, target_id)
+            await message.reply_text("✅ انجام شد.")
+
+        elif action == "subtest":
+            cmd = text.lower()
+            if cmd == "allow":
+                db.set_subtest_allowed(target_id, True)
+            elif cmd == "block":
+                db.set_subtest_allowed(target_id, False)
+            elif cmd == "usedmark":
+                db.force_mark_subtest_used(target_id)
+            elif cmd == "reset":
+                db.clear_subtest_usage(target_id)
+            await message.reply_text("✅ انجام شد.")
+
+    except Exception as e:
+        await message.reply_text(f"❌ خطا: {e}")
+
+    context.bot_data.pop(f"adminp_wait_{replied_id}", None)
+    db.clear_state(ADMIN_ID)
+    return True
