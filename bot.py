@@ -203,7 +203,7 @@ def main():
     application.add_handler(CommandHandler("user", user_command))
     application.add_handler(CommandHandler("message", message_command))
     application.add_handler(CommandHandler("channel", channel_command))
-application.add_handler(CommandHandler("getdb", send_db_backup))
+    application.add_handler(CommandHandler("getdb", send_db_backup))
 
     # ==========================================
     # Callback Query Handlers
