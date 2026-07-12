@@ -14,7 +14,7 @@ from telegram.ext import (
     filters,
     ContextTypes
 )
-database import DB_PATH
+from database import DB_PATH
 
 from config import BOT_TOKEN, ADMIN_ID
 from database import init_db
