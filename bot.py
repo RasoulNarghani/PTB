@@ -230,8 +230,7 @@ def main():
     application.add_handler(CommandHandler("restoredb", restoredb_command))
     application.add_handler(CallbackQueryHandler(admindb_confirm_restore_callback, pattern="^admindb_confirm_restore$"))
     application.add_handler(CallbackQueryHandler(admindb_cancel_restore_callback, pattern="^admindb_cancel_restore$"))
-    application.add_handler
-        (CallbackQueryHandler(admin_panel_callback, pattern=r"^adminp_.+$"))
+    application.add_handler(CallbackQueryHandler(admin_panel_callback, pattern=r"^adminp_.+$"))
     application.add_handler(CommandHandler("start", start_handler))
     application.add_handler(CommandHandler("price", price_command))
     application.add_handler(CommandHandler("user", user_command))
