@@ -3,6 +3,7 @@
 # bot.py - فایل اصلی ربات Persian Tunnel
 # =============================================
 
+from handlers.admin import admin_panel_callback, handle_admin_panel_rep
 import logging
 import asyncio
 from telegram import Update
@@ -198,6 +199,7 @@ def main():
     # ==========================================
     # Command Handlers
     # ==========================================
+    application.add_handler(CallbackQueryHandler(admin_panel_callback, pattern=r"^adminp_.+$"))
     application.add_handler(CommandHandler("start", start_handler))
     application.add_handler(CommandHandler("price", price_command))
     application.add_handler(CommandHandler("user", user_command))
