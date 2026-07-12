@@ -10,7 +10,8 @@ from contextlib import contextmanager
 
 logger = logging.getLogger(__name__)
 
-DB_PATH = "persian_tunnel.db"
+import os
+DB_PATH = "/data/persian_tunnel.db"
 
 
 @contextmanager
