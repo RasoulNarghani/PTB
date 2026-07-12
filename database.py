@@ -161,7 +161,7 @@ def init_db():
             )
         """)
 
-        ensure_subtest_allowed_column()
+        _ensure_subtest_allowed_column_inline(conn)
 
         logger.info("Database initialized successfully.")
 
@@ -596,12 +596,11 @@ def clear_state(user_id: int):
 # توابع پنل مدیریت کاربر (ادمین)
 # ==========================================
 
-def ensure_subtest_allowed_column():
-    """اضافه کردن ستون subtest_allowed در صورت نبود (یکبار در init_db صدا زده میشه)"""
-    with get_db() as conn:
-        cols = [r["name"] for r in conn.execute("PRAGMA table_info(users)").fetchall()]
-        if "subtest_allowed" not in cols:
-            conn.execute("ALTER TABLE users ADD COLUMN subtest_allowed INTEGER DEFAULT 1")
+def _ensure_subtest_allowed_column_inline(conn):
+    """اضافه کردن ستون subtest_allowed در صورت نبود (با همون کانکشن باز init_db، بدون باز کردن کانکشن جدید)"""
+    cols = [r["name"] for r in conn.execute("PRAGMA table_info(users)").fetchall()]
+    if "subtest_allowed" not in cols:
+        conn.execute("ALTER TABLE users ADD COLUMN subtest_allowed INTEGER DEFAULT 1")
 
 def is_subtest_allowed(user_id: int) -> bool:
     with get_db() as conn:
