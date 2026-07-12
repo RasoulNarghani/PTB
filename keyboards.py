@@ -487,3 +487,16 @@ def admin_message_channel_keyboard() -> InlineKeyboardMarkup:
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
+
+
+
+
+def admin_user_panel_keyboard(user_id: int):
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("✉️ ارسال پیام", callback_data=f"adminp_msg_{user_id}")],
+        [InlineKeyboardButton("🏆 امتیازات", callback_data=f"adminp_points_{user_id}")],
+        [InlineKeyboardButton("👤 دعوت شده توسط", callback_data=f"adminp_setinviter_{user_id}")],
+        [InlineKeyboardButton("👥 دعوت‌شدگان", callback_data=f"adminp_setinvited_{user_id}")],
+        [InlineKeyboardButton("📦 اشتراک‌های کاربر", callback_data=f"adminp_subs_{user_id}")],
+        [InlineKeyboardButton("⏱ اشتراک تست", callback_data=f"adminp_subtest_{user_id}")],
+    ])
