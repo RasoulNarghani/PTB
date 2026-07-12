@@ -4,6 +4,13 @@
 # =============================================
 
 import logging
+import os
+import sqlite3
+import shutil
+
+from datetime import datetime
+from database import DB_PATH
+
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
@@ -589,3 +596,101 @@ async def handle_admin_panel_reply(update: Update, context: ContextTypes.DEFAULT
     context.bot_data.pop(f"adminp_wait_{replied_id}", None)
     db.clear_state(ADMIN_ID)
     return True
+
+
+
+# دیتابیس
+RESTORE_TMP_PATH = "/tmp/restore_upload.db"
+
+async def restoredb_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not is_admin(update.effective_user.id):
+        return
+    await update.message.reply_text(
+        "📤 فایل بکاپ دیتابیس (.db) رو به عنوان Document ارسال کن.\n"
+        "⚠️ این کار دیتابیس فعلی رو جایگزین می‌کنه."
+    )
+    db.set_state(ADMIN_ID, "adminp_restoredb_wait_file", None)
+
+
+async def handle_restoredb_upload(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
+    """پردازش فایل آپلودشده برای ریستور"""
+    user = update.effective_user
+    message = update.effective_message
+
+    if user.id != ADMIN_ID:
+        return False
+
+    state_data = db.get_state(ADMIN_ID)
+    if not state_data or state_data.get("state") != "adminp_restoredb_wait_file":
+        return False
+
+    if not message.document:
+        return False
+
+    # دانلود فایل
+    tg_file = await context.bot.get_file(message.document.file_id)
+    await tg_file.download_to_drive(RESTORE_TMP_PATH)
+
+    # اعتبارسنجی فایل sqlite
+    try:
+        test_conn = sqlite3.connect(RESTORE_TMP_PATH)
+        tables = [r[0] for r in test_conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+        ).fetchall()]
+        test_conn.close()
+        if "users" not in tables:
+            raise ValueError("جدول users پیدا نشد")
+    except Exception as e:
+        await message.reply_text(f"❌ فایل معتبر نیست: {e}")
+        os.remove(RESTORE_TMP_PATH)
+        db.clear_state(ADMIN_ID)
+        return True
+
+    # نمایش تایید نهایی
+    sent = await message.reply_text(
+        "⚠️ آیا مطمئنی می‌خوای دیتابیس فعلی رو با این فایل جایگزین کنی؟\n"
+        "قبلش یه نسخه از دیتابیس فعلی safety-backup میشه.",
+        reply_markup=InlineKeyboardMarkup([[
+            InlineKeyboardButton("✅ بله، جایگزین کن", callback_data="admindb_confirm_restore"),
+            InlineKeyboardButton("❌ انصراف", callback_data="admindb_cancel_restore"),
+        ]])
+    )
+    db.clear_state(ADMIN_ID)
+    return True
+
+
+async def admindb_confirm_restore_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    if query.from_user.id != ADMIN_ID:
+        return
+
+    try:
+        # safety backup از دیتابیس فعلی
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        safety_path = f"{DB_PATH}.before_restore_{ts}"
+        if os.path.exists(DB_PATH):
+            shutil.copy2(DB_PATH, safety_path)
+
+        # جایگزینی
+        shutil.move(RESTORE_TMP_PATH, DB_PATH)
+
+        # بروزرسانی ساختار جداول جدید (اگه بکاپ قدیمی، ستون‌های جدید رو نداشته باشه)
+        db.init_db()
+
+        await query.message.edit_text(
+            f"✅ دیتابیس با موفقیت جایگزین شد.\n"
+            f"🛡 نسخه‌ی قبلی به عنوان safety-backup ذخیره شد: {safety_path}"
+        )
+    except Exception as e:
+        await query.message.edit_text(f"❌ خطا در جایگزینی: {e}")
+
+
+async def admindb_cancel_restore_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    if query.from_user.id != ADMIN_ID:
+        return
+    if os.path.exists(RESTORE_TMP_PATH):
+        os.remove(RESTORE_TMP_PATH)
+    await query.message.edit_text("❌ ریستور لغو شد.")
