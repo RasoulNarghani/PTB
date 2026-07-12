@@ -69,6 +69,8 @@ CLOSE_TICKET_PREFIX = "close_ticket_"   # close_ticket_TICKET_ID
 ADMIN_SEND_NOW = "admin_send_now"
 ADMIN_CANCEL = "admin_cancel"
 ADMIN_ADD_BUTTONS = "admin_add_buttons"
+# --- Admin User Panel ---
+ADMIN_PANEL_PREFIX = "adminp_"   # adminp_ACTION_USERID
 
 # --- Admin Subscription ---
 ADMIN_DONE_PREFIX = "admin_done_"       # admin_done_TYPE_ID
