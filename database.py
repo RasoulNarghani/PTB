@@ -141,11 +141,12 @@ def init_db():
         """)
 
         # درج قیمت‌های پیش‌فرض
-        from config import DEFAULT_USDT_PRICE, DEFAULT_GRAM_PRICE, DEFAULT_TRX_PRICE
+        from config import DEFAULT_USDT_PRICE, DEFAULT_TRX_PRICE, DEFAULT_GRAM_PRICE, DEFAULT_NOT_PRICE
         default_prices = [
             ("usdt", DEFAULT_USDT_PRICE),
-            ("gram", DEFAULT_GRAM_PRICE),
             ("trx", DEFAULT_TRX_PRICE),
+            ("gram", DEFAULT_GRAM_PRICE),
+            ("not", DEFAULT_NOT_PRICE),
         ]
         cursor.executemany("""
             INSERT OR IGNORE INTO prices (currency, price) VALUES (?, ?)

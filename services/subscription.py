@@ -171,13 +171,15 @@ def validate_subscription_link(link: str) -> bool:
 def calculate_prices(price_toman: int, prices_db: dict) -> dict:
     """محاسبه قیمت به ارزهای مختلف"""
     usdt_price = prices_db.get("usdt", {}).get("price", 174000)
-    gram_price = prices_db.get("gram", {}).get("price", 300000)
     trx_price = prices_db.get("trx", {}).get("price", 52900)
+    gram_price = prices_db.get("gram", {}).get("price", 300000)
+    not_price = prices_db.get("not", {}).get("price", 70)
 
     return {
         "usdt": round(price_toman / usdt_price, 2),
-        "gram": round(price_toman / gram_price, 2),
         "trx": round(price_toman / trx_price, 2),
+        "gram": round(price_toman / gram_price, 2),
+        "not": round(price_toman / not_price, 2),
     }
 
 

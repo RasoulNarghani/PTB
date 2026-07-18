@@ -137,8 +137,13 @@ async def renew_selected_callback(update: Update, context: ContextTypes.DEFAULT_
 
     await query.message.edit_text(
         user_order_details_text(
-            sub_username, volume, price,
-            crypto_prices["usdt"], crypto_prices["gram"], crypto_prices["trx"]
+            sub_username,
+            volume,
+            price,
+            crypto_prices["usdt"],
+            crypto_prices["trx"],
+            crypto_prices["gram"],
+            crypto_prices["not"]
         ),
         reply_markup=wallets_keyboard(),
         parse_mode="HTML"
@@ -206,8 +211,13 @@ async def random_username_callback(update: Update, context: ContextTypes.DEFAULT
 
     await query.message.edit_text(
         user_order_details_text(
-            display_name, volume, price,
-            crypto_prices["usdt"], crypto_prices["gram"], crypto_prices["trx"]
+            display_name,
+            volume,
+            price,
+            crypto_prices["usdt"],
+            crypto_prices["trx"],
+            crypto_prices["gram"],
+            crypto_prices["not"]
         ),
         reply_markup=wallets_keyboard(),
         parse_mode="HTML"
@@ -273,8 +283,13 @@ async def handle_username_input(update: Update, context: ContextTypes.DEFAULT_TY
 
     await message.reply_text(
         user_order_details_text(
-            username, volume, price,
-            crypto_prices["usdt"], crypto_prices["gram"], crypto_prices["trx"]
+            username,
+            volume,
+            price,
+            crypto_prices["usdt"],
+            crypto_prices["trx"],
+            crypto_prices["gram"],
+            crypto_prices["not"]
         ),
         reply_markup=wallets_keyboard(),
         parse_mode="HTML"

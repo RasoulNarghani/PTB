@@ -190,9 +190,15 @@ def user_taken_id_text(sub_username: str) -> str:
 """
 
 
-def user_order_details_text(sub_username: str, sub_total_volume: int,
-                             price_toman: int, price_usdt: float,
-                             price_gram: float, price_trx: float) -> str:
+def user_order_details_text(
+    sub_username: str,
+    sub_total_volume: int,
+    price_toman: int,
+    price_usdt: float,
+    price_trx: float,
+    price_gram: float,
+    price_not: float
+    ) -> str:
     return f"""
 📋 <b>جزییات اشتراک شما:</b>
 🆔 نام‌کاربری:   <b>{sub_username}</b>
@@ -201,12 +207,13 @@ def user_order_details_text(sub_username: str, sub_total_volume: int,
 💰 مبلغ:   <b>{price_toman:,} تومان</b>
 
 💲 معادل:   <b>{price_usdt} USDT</b>
-💎 معادل:   <b>{price_gram} Gram (ex TON)</b>
 🔴 معادل:   <b>{price_trx} TRX</b>
+💎 معادل:   <b>{price_gram} Gram (ex TON)</b>
+⚫ معادل:   <b>{price_not} NOT</b>
 
 
 🪙 <b>آدرس ولت‌ها:</b>
-TON (USDT coin, Gram coin):
+TON (USDT coin, Gram coin, Notcoin):
 <code>{TON_WALLET}</code>
 
 TRC20 (USDT coin, TRX coin):
@@ -814,8 +821,9 @@ def admin_price_text(prices: dict) -> str:
     lines = ["💱 <b>قیمت ارزها:</b>\n"]
     currency_names = {
         "usdt": "USDT (تتر)",
+        "trx": "TRX (ترون)",
         "gram": "Gram (گرام)",
-        "trx": "TRX (ترون)"
+        "not": "NOT (ناتکوین)"
     }
     for currency, info in prices.items():
         name = currency_names.get(currency, currency.upper())

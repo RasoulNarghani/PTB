@@ -54,14 +54,15 @@ async def price_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "📌 نحوه استفاده:\n"
             "/price usdt 175000\n"
+            "/price trx 57000\n"
             "/price gram 297000\n"
-            "/price trx 57000"
+            "/price not 70"
         )
         return
 
     currency = args[0].lower()
-    if currency not in ["usdt", "gram", "trx"]:
-        await update.message.reply_text("❌ ارز نامعتبر! (usdt, gram, trx)")
+    if currency not in ["usdt", "trx", "gram", "not"]:
+        await update.message.reply_text("❌ ارز نامعتبر! (usdt, trx, gram, not)")
         return
 
     try:
@@ -74,8 +75,9 @@ async def price_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     currency_names = {
         "usdt": "USDT (تتر)",
+        "trx": "TRX (ترون)",
         "gram": "Gram (گرام)",
-        "trx": "TRX (ترون)"
+        "not": "NOT (ناتکوین)"
     }
 
     await update.message.reply_text(
